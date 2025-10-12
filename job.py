@@ -2,16 +2,21 @@ from enum import Enum
 
 
 class JobStatus(Enum):
-    READY = 'ready'
-    RUNNING = 'running'
-    BLOCKED = 'blocked'
-    FINISHED = 'finished'
+    NEW = 'NOVO'
+    READY = 'PRONTO'
+    RUNNING = 'EXECUTANDO'
+    FINISHED = 'FINALIZADO'
+
 
 class Job:
-    def __init__(self, job_id, arrival_time, execution_time, remaining_time, remaining_quantum, status):
+    def __init__(self, job_id, arrival_time, execution_time):
         self.job_id = job_id
         self.arrival_time = arrival_time
         self.execution_time = execution_time
-        self.remaining_time = remaining_time
-        self.remaining_quantum = remaining_quantum
-        self.status = status
+        self.remaining_time = execution_time
+        self.status = JobStatus.NEW
+
+        # Métricas de desempenho
+        self.wait_time = 0
+        self.turnaround_time = 0
+        self.context_switches = 0

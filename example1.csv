@@ -1,0 +1,7 @@
+job_id,arrival_time,execution_time
+P1,0,8
+P2,1,5
+P3,2,10
+P4,3,3
+P5,4,2
+P6,5,6

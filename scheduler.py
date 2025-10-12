@@ -1,46 +1,42 @@
+from queue import Queue
+from job import JobStatus
+
+BASE_QUANTUM = 6
+MIN_QUANTUM = 2
+
 class Scheduler:
+    def __init__(self, logger, clock, dynamic_quantum=False, fixed_quantum=4):
+        self.ready_queue = Queue()
+        self.finished_jobs = []
+        self.logger = logger
+        self.clock = clock
+        self.dynamic_quantum = dynamic_quantum
+        self.fixed_quantum = fixed_quantum
 
-    def __init__(self, process_queue):
-        self.process_queue = process_queue
-        self.job_amount = len(process_queue)
-
-    def findWaitingTime(self, quantum):
-
-        remaining_burst_time = [0] * self.job_amount
-
-        for i in range(self.job_amount):
-            remaining_burst_time[i] = self.process_queue[i].get('burst_time')
-
-        time = 0
-
-        for i in range(self.job_amount):
-            while remaining_burst_time[i] > 0:
-                self.emulate_execution(remaining_burst_time, i, quantum, time)
-
-    def emulate_execution(self, remaining_burst_time, i, quantum, time):
-        if remaining_burst_time[i] > quantum:
-            time += quantum
-            remaining_burst_time[i] -= quantum
-
+    def calculate_quantum(self):
+        if not self.dynamic_quantum:
+            return self.fixed_quantum
         else:
-            time = time + remaining_burst_time[i]
-            self.process_queue[i].wait_time = time - self.process_queue[i].get('burst_time')
-            remaining_burst_time[i] = 0
+            num_ready = self.ready_queue.qsize()
+            quantum = BASE_QUANTUM - num_ready
+            return max(MIN_QUANTUM, quantum)
 
-    def findTurnAroundTime(self):
-        for i in range(self.job_amount):
-            self.process_queue[i].turnaround_time = self.process_queue[i].get('burst_time') + self.process_queue[i].get(
-                'wait_time')
+    def add_job(self, job):
+        job.status = JobStatus.READY
+        self.ready_queue.put(job)
+        self.logger.log(f"Scheduler: Processo {job.job_id} adicionado à fila de prontos.", self.clock.get_time())
 
-    def findavgTime(self, quantum):
-        self.findWaitingTime(quantum)
+    def get_next_job(self):
+        if not self.ready_queue.empty():
+            return self.ready_queue.get()
+        return None
 
-        self.findTurnAroundTime()
+    def finish_job(self, job):
+        current_time = self.clock.get_time()
+        job.status = JobStatus.FINISHED
+        job.turnaround_time = current_time - job.arrival_time
+        job.wait_time = job.turnaround_time - job.execution_time
+        self.finished_jobs.append(job)
 
-        total_wt = 0
-        total_tat = 0
-        for i in range(self.job_amount):
-            total_wt = total_wt + self.process_queue[i].get('wait_time')
-            total_tat = total_tat + self.process_queue[i].get('turnaround_time')
-
-        return total_wt, total_tat
+    def is_idle(self):
+        return self.ready_queue.empty()
