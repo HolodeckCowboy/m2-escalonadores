@@ -5,6 +5,7 @@ class JobStatus(Enum):
     NEW = 'NOVO'
     READY = 'PRONTO'
     RUNNING = 'EXECUTANDO'
+    BLOCKED = 'BLOQUEADO'
     FINISHED = 'FINALIZADO'
 
 
@@ -16,7 +17,8 @@ class Job:
         self.remaining_time = execution_time
         self.status = JobStatus.NEW
 
-        # Métricas de desempenho
         self.wait_time = 0
         self.turnaround_time = 0
         self.context_switches = 0
+
+        self.io_block_end_time = 0
